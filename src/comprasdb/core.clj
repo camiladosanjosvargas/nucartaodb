@@ -131,7 +131,7 @@
          :keys categoria valor-total
          :with ?compra
          :where [?compra :compras/valor ?valor]
-         ;[?compra :compras/categoria1 ?categoria1]
+         [?compra :compras/categoria1 ?categoria1]
          [?categoria :categoria/nome ?nome]] db))
 
 (relatorio-gasto-total-por-categoria db)
