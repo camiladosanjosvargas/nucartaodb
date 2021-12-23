@@ -4,11 +4,8 @@
             [comprasdb.db :as db]
             [comprasdb.modelo :as model]
             [comprasdb.adiconar-no-bd :as add]
-            [comprasdb.util :as n.u]
             [comprasdb.core :as c]
             [java-time :as j]))
-
-(def formata-com-duas-casas-decimais n.u/formata-com-duas-casas-decimais)
 
 (def conn (db/abre-conexao))
 
@@ -20,66 +17,83 @@
 
 (pprint @(d/transact conn [educacao, saude, beleza]))
 
-(let [cartao1 (model/novo-cartao 10N 1N "908976" "989" (j/sql-timestamp (j/local-date-time)) 100M)
-      cartao2 (model/novo-cartao 50N 1N "7646378" "546" (j/sql-timestamp (j/local-date-time)) 100M)
-      cartao3 (model/novo-cartao 20N 2N "4563575" "764" (j/sql-timestamp (j/local-date-time)) 100M)
-      cartao4 (model/novo-cartao 30N 3N "753567" "643" (j/sql-timestamp (j/local-date-time)) 100M)
-      cartao5 (model/novo-cartao 30N 3N "845354" "123" (j/sql-timestamp (j/local-date-time)) 100M)]
-  (d/transact conn [cartao1, cartao2, cartao3, cartao4, cartao5]))
-
 (defn uuid [] (java.util.UUID/randomUUID))
 
-(def compra-10-escola (model/nova-compra (uuid) 10N (j/sql-timestamp (j/local-date-time)) 80M "EscolaABC" "Educação"))
-(def compra-10-farmacia (model/nova-compra (uuid) 10N (j/sql-timestamp (j/local-date-time)) 5M "FarmaciaABC" "Saúde"))
-(def compra-20-escola (model/nova-compra (uuid) 20N (j/sql-timestamp (j/local-date-time)) 50M "EscolaABC" "Educação"))
-(def compra-20-escola-abc (model/nova-compra (uuid) 20N (j/sql-timestamp (j/local-date-time)) 50M "EscolaABC" "Educação"))
-(def compra-30-salao (model/nova-compra (uuid) 30N (j/sql-timestamp (j/local-date-time)) 30M "SalaoABC" "Beleza"))
-(def compra-30-educacao (model/nova-compra (uuid) 30N (j/sql-timestamp (j/local-date-time)) 40M "EscolaABC" "Educação"))
+(def cliente-1 (model/novo-cliente (uuid) "Maria" "12346434567" "maria@gmail.com"))
+(def cliente-2 (model/novo-cliente (uuid) "Carlos" "12346434567" "carlos@gmail.com"))
+(def cliente-3 (model/novo-cliente (uuid) "Paula" "12346434567" "paula@gmail.com"))
+(def cliente-4 (model/novo-cliente (uuid) "Joao" "12346434567" "joao@gmail.com"))
+(d/transact conn [cliente-1, cliente-2, cliente-3, cliente-4])
+
+
+(def cartao-10 (model/novo-cartao (uuid) 10N "908976" "989" (j/sql-timestamp (j/local-date-time)) 100M))
+(def cartao-50 (model/novo-cartao (uuid) 50N "7646378" "546" (j/sql-timestamp (j/local-date-time)) 100M))
+(def cartao-20 (model/novo-cartao (uuid) 20N "4563575" "764" (j/sql-timestamp (j/local-date-time)) 100M))
+(def cartao-30 (model/novo-cartao (uuid) 30N "753567" "643" (j/sql-timestamp (j/local-date-time)) 100M))
+
+(d/transact conn [cartao-10, cartao-50, cartao-20, cartao-30])
+
+(def compra-10-escola (model/nova-compra (uuid) (j/sql-timestamp (j/local-date-time)) 80M "EscolaABC"))
+(def compra-10-farmacia (model/nova-compra (uuid) (j/sql-timestamp (j/local-date-time)) 5M "FarmaciaABC"))
+(def compra-20-escola (model/nova-compra (uuid) (j/sql-timestamp (j/local-date-time)) 50M "EscolaABC"))
+(def compra-20-escola-abc (model/nova-compra (uuid) (j/sql-timestamp (j/local-date-time)) 50M "EscolaABC"))
+(def compra-30-salao (model/nova-compra (uuid) (j/sql-timestamp (j/local-date-time)) 30M "SalaoABC"))
+(def compra-30-educacao (model/nova-compra (uuid) (j/sql-timestamp (j/local-date-time)) 40M "EscolaABC"))
 
 (d/transact conn [compra-10-escola compra-10-farmacia compra-20-escola compra-20-escola-abc compra-30-salao compra-30-educacao])
 
+(defn db-adds-de-atribuicao-de-cliente [cartao cliente]
+  [[:db/add
+    [:cartao/id (:cartao/id cartao)]
+    :cartao/cliente
+    [:cliente/id (:cliente/id cliente)]]])
 
-(pprint (d/transact conn [[:db/add [:compras/id (:compras/id compra-10-escola)]
-                           :compras/categoria1
-                           [:categoria/id (:categoria/id educacao)]]]))
-(pprint (d/transact conn [[:db/add [:compras/id (:compras/id compra-10-farmacia)]
-                           :compras/categoria1
-                           [:categoria/id (:categoria/id saude)]]]))
-(pprint (d/transact conn [[:db/add [:compras/id (:compras/id compra-20-escola)]
-                           :compras/categoria1
-                           [:categoria/id (:categoria/id educacao)]]]))
-(pprint (d/transact conn [[:db/add [:compras/id (:compras/id compra-20-escola-abc)]
-                           :compras/categoria1
-                           [:categoria/id (:categoria/id educacao)]]]))
-(pprint (d/transact conn [[:db/add [:compras/id (:compras/id compra-30-salao)]
-                           :compras/categoria1
-                           [:categoria/id (:categoria/id beleza)]]]))
-(pprint (d/transact conn [[:db/add [:compras/id (:compras/id compra-30-educacao)]
-                           :compras/categoria1
-                           [:categoria/id (:categoria/id educacao)]]]))
+(defn atribui-cliente [conn cartao cliente]
+  (let [a-transacionar (db-adds-de-atribuicao-de-cliente cartao cliente)]
+    (d/transact conn a-transacionar)))
+
+(atribui-cliente conn cartao-10 cliente-1)
+(atribui-cliente conn cartao-50 cliente-2)
+(atribui-cliente conn cartao-20 cliente-3)
+(atribui-cliente conn cartao-30 cliente-4)
+
+
+(defn db-adds-de-atribuicao-de-cartao [compra cartao]
+  [[:db/add
+    [:compras/id (:compras/id compra)]
+    :compras/cartao
+    [:cartao/id (:cartao/id cartao)]]])
+
+(defn atribui-cartao [conn compra cartao]
+  (let [a-transacionar (db-adds-de-atribuicao-de-cartao compra cartao)]
+    (d/transact conn a-transacionar)))
+
+
+(atribui-cartao conn compra-10-escola cartao-10)
+(atribui-cartao conn compra-10-farmacia cartao-10)
+(atribui-cartao conn compra-20-escola cartao-20)
+(atribui-cartao conn compra-20-escola-abc cartao-20)
+(atribui-cartao conn compra-30-salao cartao-30)
+(atribui-cartao conn compra-30-educacao cartao-30)
+
+
+(defn atribui-categorias [conn detalhes categoria]
+  (let [a-transacionar (reduce (fn[db-adds compra] (conj db-adds [:db/add
+                                                                  [:compras/id (:compras/id compra)]
+                                                                  :compras/categoria
+                                                                  [:categoria/id (:categoria/id categoria)]]))
+                               []
+                               detalhes)]
+    (d/transact conn a-transacionar)))
+
+
+(atribui-categorias conn [compra-10-escola, compra-20-escola, compra-20-escola-abc compra-30-educacao] educacao)
+(atribui-categorias conn [compra-10-farmacia] saude)
+(atribui-categorias conn [compra-30-salao] beleza)
+
 
 (def db (d/db conn))
 
-(defn todos-os-registros [db]
-  (d/q '[:find ?entidade
-         :where [?entidade :compras/cartao]] db))
-
-(defn busca-cliente-por-cartao [db cartao]
-  (d/q '[:find ?cliente
-         :keys cliente
-         :in $ ?cartao-a-ser-buscado
-         :where [?compra :compras/cartao ?cartao-a-ser-buscado]
-         [?compra :compras/cliente ?cliente]] db cartao))
-
-(defn busca-compras-por-cartao [db cartao]
-  (d/q '[:find ?data ?valor ?estabelecimento ?categoria
-         :keys data valor estabelecimento categoria
-         :in $ ?cartao-a-ser-buscado
-         :where [?compra :compras/cartao ?cartao-a-ser-buscado]
-         [?compra :compras/data ?data]
-         [?compra :compras/valor ?valor]
-         [?compra :compras/estabelecimento ?estabelecimento]
-         [?compra :compras/categoria ?categoria]] db cartao))
 
 (defn todas-as-categorias [db]
   (d/q '[:find (pull ?categoria [*])
@@ -87,57 +101,53 @@
 
 (defn todas-as-compras [db]
   (d/q '[:find (pull ?entidade [*])
-         :where [?entidade :compras/cartao]] db))
+         :where [?entidade :compras/id]] db))
 
-(defn uma-compra [db compras-id]
-  (d/pull db '[*] [:compras/id compras-id]))
+(defn todas-os-clientes [db]
+  (d/q '[:find (pull ?entidade [*])
+         :where [?entidade :cliente/id]] db))
 
-(defn total-dos-gastos
-  [elementos]
-  (formata-com-duas-casas-decimais (reduce + (map :valor elementos))))
+(defn todas-os-cartoes [db]
+  (d/q '[:find (pull ?entidade [*])
+         :where [?entidade :cartao/id]] db))
 
-(defn todos-os-gastos
-  [[chave valor]]
-  {chave (total-dos-gastos valor)})
-
-(defn todas-as-compras-por-cartao
-  [cartao]
-  (let [todas-compras (busca-compras-por-cartao db cartao)]
-    {:cliente                       (map :cliente (busca-cliente-por-cartao db cartao))
-     :quantidade-total-de-compras   (count (map :valor todas-compras))
-     :total-de-gastos               (total-dos-gastos todas-compras)
-     :total-de-gastos-por-categoria (map todos-os-gastos (group-by :categoria todas-compras))
-     :compras-realizadas            todas-compras}))
-
-
-;consulta que retorna todas as compras
-(todas-as-compras db)
-
-;consulta que retorna uma compra dado um id
-(pprint (uma-compra db (:compras/id compra-50-escola)))
-
-;consulta que retorna todas as categorias
-(todas-as-categorias db)
-
-;consulta que retorna um cliente por cartao
-(busca-cliente-por-cartao db 10N)
-
-;consulta que retorna todas as compras de um cartao
-(busca-compras-por-cartao db 10N)
-
-;consulta que retorna o gasto total por categoria
 (defn relatorio-gasto-total-por-categoria [db]
   (d/q '[:find ?nome (sum ?valor)
          :keys categoria valor-total
          :with ?compra
          :where [?compra :compras/valor ?valor]
-         [?compra :compras/categoria1 ?categoria1]
+         [?compra :compras/categoria ?categoria]
          [?categoria :categoria/nome ?nome]] db))
 
+(defn uma-compra [db compras-id]
+  (d/pull db '[*] [:compras/id compras-id]))
+
+(defn relatorio-por-cartao [db cartao]
+  (d/q '[:find (pull ?cartao [:cartao/cartao]) ?nome (sum ?valor) (pull ?compra [*])
+         :keys cartao categoria total-de-gastos-por-categoria compra-realizada
+         :in $ ?cartao-procurado
+         :where [?cartao :cartao/cartao ?cartao-procurado]
+         [?compra compras/cartao ?cartao]
+         [?compra :compras/valor ?valor]
+         [?compra :compras/categoria ?categoria]
+         [?categoria :categoria/nome ?nome]] db cartao))
+
+;consultas
+(todas-as-compras db)
+(todas-os-cartoes db)
+(todas-os-clientes db)
+
+;consulta que retorna uma compra dado um id
+(uma-compra db (:compras/id compra-10-escola))
+
+;consulta que retorna todas as categorias
+(todas-as-categorias db)
+
+;consulta que retorna o gasto total por categoria
 (relatorio-gasto-total-por-categoria db)
 
-;lista todas as compras por cartão
-(todas-as-compras-por-cartao 10N)
+;consulta que retorna relatório de compras por cliente
+(relatorio-por-cartao db 10N)
 
 
 ;(db/apaga-banco)

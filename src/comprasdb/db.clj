@@ -16,33 +16,54 @@
 (defn apaga-banco []
   (d/delete-database db-uri))
 
-(def schema-cartao [{:db/ident       :compras/cartao
-                     :db/valueType   :db.type/bigint
-                     :db/cardinality :db.cardinality/one}
-                    {:db/ident       :compras/cliente
-                     :db/valueType   :db.type/bigint
-                     :db/cardinality :db.cardinality/one}
-                    {:db/ident       :compras/numero
+(def schema-compra [
+                    ;cliente
+                    {:db/ident       :cliente/id
+                     :db/valueType   :db.type/uuid
+                     :db/cardinality :db.cardinality/one
+                     :db/unique      :db.unique/identity}
+                    {:db/ident       :cliente/nome
                      :db/valueType   :db.type/string
                      :db/cardinality :db.cardinality/one}
-                    {:db/ident       :compras/cvv
+                    {:db/ident       :cliente/cpf
                      :db/valueType   :db.type/string
                      :db/cardinality :db.cardinality/one}
-                    {:db/ident       :compras/validade
+                    {:db/ident       :cliente/email
+                     :db/valueType   :db.type/string
+                     :db/cardinality :db.cardinality/one}
+
+                    ;cartao
+                    {:db/ident       :cartao/id
+                     :db/valueType   :db.type/uuid
+                     :db/cardinality :db.cardinality/one
+                     :db/unique      :db.unique/identity}
+                    {:db/ident       :cartao/cliente
+                     :db/valueType   :db.type/ref
+                     :db/cardinality :db.cardinality/one}
+                    {:db/ident       :cartao/cartao
+                     :db/valueType   :db.type/bigint
+                     :db/cardinality :db.cardinality/one}
+                    {:db/ident       :cartao/numero
+                     :db/valueType   :db.type/string
+                     :db/cardinality :db.cardinality/one}
+                    {:db/ident       :cartao/cvv
+                     :db/valueType   :db.type/string
+                     :db/cardinality :db.cardinality/one}
+                    {:db/ident       :cartao/validade
                      :db/valueType   :db.type/instant
                      :db/cardinality :db.cardinality/one}
-                    {:db/ident       :compras/limite
+                    {:db/ident       :cartao/limite
                      :db/valueType   :db.type/bigdec
-                     :db/cardinality :db.cardinality/one}])
+                     :db/cardinality :db.cardinality/one}
 
-(def schema-compra [
-                    ;Compras
+                    ;compras
                     {:db/ident       :compras/id
                      :db/valueType   :db.type/uuid
                      :db/cardinality :db.cardinality/one
                      :db/unique      :db.unique/identity}
-                    {:db/ident     :compras/cartao
-                     :db/valueType :db.type/bigint}
+                    {:db/ident       :compras/cartao
+                     :db/valueType   :db.type/ref
+                     :db/cardinality :db.cardinality/one}
                     {:db/ident       :compras/data
                      :db/valueType   :db.type/instant
                      :db/cardinality :db.cardinality/one}
@@ -53,9 +74,6 @@
                      :db/valueType   :db.type/string
                      :db/cardinality :db.cardinality/one}
                     {:db/ident       :compras/categoria
-                     :db/valueType   :db.type/string
-                     :db/cardinality :db.cardinality/one}
-                    {:db/ident        :compras/categoria1
                      :db/valueType   :db.type/ref
                      :db/cardinality :db.cardinality/one}
 
@@ -69,7 +87,6 @@
                      :db/unique      :db.unique/identity}])
 
 (defn cria-schema [conn]
-  (d/transact conn schema-cartao)
   (d/transact conn schema-compra))
 
 
